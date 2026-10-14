@@ -52,3 +52,9 @@ Workflow templates are included for automated tests, GitHub Pages deployment, Co
 ## Maintainers
 
 Mightora / TechTweedie — MIT licensed. Not affiliated with Microsoft. Microsoft Power BI product trademarks belong to their owners.
+
+### Standard Mightora author, footer and verification badges
+
+The online edition loads the shared Mightora UI and uses its author configuration (`data/config.json`), including the TechTweedie biography and photographs. The same author markup is present as a static fallback. The offline edition embeds the pinned brand assets at build time, without fetching anything while running.
+
+Quality badges are **live external evidence**, not manually asserted results: GitHub Actions build/deploy, CodeQL and dependency-manifest-check workflow SVGs, plus Shields badges backed by the public GitHub repository for licence, source activity and Pages deployment. All badge links open the underlying GitHub evidence. Offline editions show links to live evidence rather than stale or invented status indicators. The dependency workflow verifies the zero-package runtime manifest; it is not a security certification and does not scan CDN-hosted shared UI code.

@@ -1,0 +1,12 @@
+{
+  "author": {
+    "name": "Ian Tweedie",
+    "image": "https://techtweedie.github.io/images/author/ian-tweedie-sq2_hu_a380911c6f4726de.png",
+    "branding": { "label": "TechTweedie" },
+    "bio": "Power BI Report Diff is a free developer tool created by Ian Tweedie — also known online as TechTweedie. Ian is a technology consultant and developer based in North East England with a background in enterprise IT, cloud infrastructure and developer tooling. He builds free, practical tools and writes about technology on his blog.",
+    "links": [
+      { "label": "Blog", "url": "https://techtweedie.github.io", "icon": "fas fa-blog" },
+      { "label": "GitHub", "url": "https://github.com/itweedie", "icon": "fab fa-github" }
+    ]
+  }
+}

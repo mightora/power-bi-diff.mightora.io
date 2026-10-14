@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Bundle verified official Mightora image assets
+        run: python scripts/fetch_brand_assets.py
       - name: Tests, build and offline checks
         run: npm run check
       - name: Upload pages artifact

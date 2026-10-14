@@ -46,9 +46,38 @@
 <details><summary>Does the offline edition need installation?</summary><p>No. Download the single HTML file or extract the ZIP, then open index.html directly in a modern browser. No installation, local server or internet access is needed.</p></details>
 </div></div></section>
 </main>
-<mightora-author><div class="container author-section-inner"><div class="author-avatar-fallback" aria-hidden="true">IT</div><div><h2 class="author-heading">Built by TechTweedie</h2><p class="author-bio">Power BI Report Diff is a free developer tool from <strong>Ian Tweedie</strong> (TechTweedie), a technology consultant and developer from North East England. Built as part of Mightora's collection of practical, open tools.</p><div class="author-links"><a href="https://techtweedie.github.io" target="_blank" rel="noopener noreferrer">TechTweedie blog ↗</a><a href="https://github.com/itweedie" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div></div></div></mightora-author>
-<section class="badges-section" aria-label="Open source trust and verification" id="trust"><div class="container"><div class="badge-list" id="trust-badges"><a class="badge-link" href="./LICENSE">MIT open-source licence ↗</a><a class="badge-link" href="https://github.com/mightora/power-bi-diff.mightora.io" target="_blank" rel="noopener noreferrer">GitHub · View source ↗</a><a class="badge-link" href="https://github.com/mightora/power-bi-diff.mightora.io/actions/workflows/test-deploy.yml" target="_blank" rel="noopener noreferrer">Build, tests &amp; deployment ↗</a><a class="badge-link" href="https://github.com/mightora/power-bi-diff.mightora.io/actions/workflows/codeql.yml" target="_blank" rel="noopener noreferrer">CodeQL security analysis ↗</a><a class="badge-link" href="https://github.com/mightora/power-bi-diff.mightora.io/actions/workflows/dependency-audit.yml" target="_blank" rel="noopener noreferrer">Dependency review ↗</a></div><p>This open-source application can be independently inspected. Follow each evidence link to see the current workflow status; a passing workflow does not guarantee the absence of vulnerabilities.</p></div></section>
-<mightora-footer><div class="container footer-inner"><p>© {{YEAR}} <a href="https://mightora.io" target="_blank" rel="noopener noreferrer">Mightora</a> · Free, transparent developer tools. Not affiliated with Microsoft.</p><p><a href="#compare">Back to top ↑</a> · <a href="#privacy">Privacy &amp; transparency</a></p></div></mightora-footer>
+<mightora-author config-url="./data/config.json">
+  <div class="author-section-overlay">
+    <div class="author-section-inner">
+      <div class="author-photos">
+        <img src="https://techtweedie.github.io/images/author/ian-tweedie-sq2_hu_a380911c6f4726de.png" alt="Ian Tweedie" class="author-avatar" width="120" height="120" loading="lazy">
+        <img src="https://raw.githubusercontent.com/TechTweedie/techtweedie.github.io/v2/assets/images/site/main-logo.png" alt="TechTweedie" class="author-blog-logo" width="110" loading="lazy">
+      </div>
+      <div class="author-text">
+        <h2 class="author-heading">Built by TechTweedie</h2>
+        <p class="author-bio">Power BI Report Diff is a free developer tool created by <strong>Ian Tweedie</strong> — also known online as <strong>TechTweedie</strong>. Ian is a technology consultant and developer based in North East England with a background in enterprise IT, cloud infrastructure and developer tooling. He builds free, practical tools and writes about technology on his blog.</p>
+        <div class="author-links">
+          <a href="https://techtweedie.github.io" target="_blank" rel="noopener noreferrer" class="author-link">Blog ↗</a>
+          <a href="https://github.com/itweedie" target="_blank" rel="noopener noreferrer" class="author-link">GitHub ↗</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</mightora-author>
+<section class="badges-section" aria-label="Open-source and build verification" id="trust">
+  <div class="container">
+    <div class="badge-list" id="trust-badges">{{BADGE_CONTENT}}</div>
+    <p>Open source under the MIT licence. Inspect the <a href="https://github.com/mightora/power-bi-diff.mightora.io" target="_blank" rel="noopener noreferrer">repository</a>, <a href="https://github.com/mightora/power-bi-diff.mightora.io/actions" target="_blank" rel="noopener noreferrer">actual GitHub Actions runs</a> and <a href="https://github.com/mightora/power-bi-diff.mightora.io/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">licence</a>. A successful check is not a security certification.</p>
+  </div>
+</section>
+<mightora-footer>
+  <div class="container">
+    <div class="footer-bottom">
+      <div class="footer-copy">&copy; <span class="footer-year">{{YEAR}}</span> Power BI Report Diff by <a href="https://mightora.io" target="_blank" rel="noopener noreferrer">Mightora</a>. Open source on <a href="https://github.com/mightora/power-bi-diff.mightora.io" target="_blank" rel="noopener noreferrer">GitHub</a>. Not affiliated with Microsoft.</div>
+      <div class="footer-bottom-links"><a href="#compare">Back to top ↑</a><a href="#privacy">Privacy &amp; transparency</a></div>
+    </div>
+  </div>
+</mightora-footer>
 <div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
 {{SCRIPT}}
 </body></html>
