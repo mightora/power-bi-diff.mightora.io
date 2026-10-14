@@ -80,4 +80,15 @@
 </mightora-footer>
 <div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
 {{SCRIPT}}
+
+<!-- Cloudflare Web Analytics: production only; no network traffic for local or offline copies -->
+<script>
+  if (window.location.hostname === 'power-bi-diff.mightora.io') {
+    const analyticsBeacon = document.createElement('script');
+    analyticsBeacon.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+    analyticsBeacon.defer = true;
+    analyticsBeacon.setAttribute('data-cf-beacon', '{"token":"54355574b7594d3d9d9946038d33925a","spa":true}');
+    document.head.appendChild(analyticsBeacon);
+  }
+</script>
 </body></html>
