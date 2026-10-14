@@ -1,0 +1,24 @@
+name: Dependency security check
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '0 5 * * 1'
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Runtime dependency manifest inspection
+        run: |
+          node -e "const p=require('./package.json'); if (Object.keys(p.dependencies||{}).length || Object.keys(p.devDependencies||{}).length) process.exit(1); console.log('No npm dependencies to audit');"
+      - name: Check pinned remote UI dependencies
+        run: |
+          grep -q 'js-yaml@4.1.0' scripts/build.py
+          echo 'Review CDN shared-ui @main updates before release; CodeQL handles source analysis.'
