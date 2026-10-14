@@ -10,7 +10,7 @@ const icon = (name,size=20) => {
 function status(message, kind='info') { const el = $('#toast'); el.className = `toast ${kind}`; el.textContent=message; el.hidden=false; clearTimeout(status.timer); status.timer=setTimeout(()=>el.hidden=true,5500); }
 function setLoaded(which,snap) {
  state[which] = snap;
- const wrap = $(`#slot-${which}`); wrap.classList.add('ready');
+ const wrap = $(`#slot-${which}`); wrap.classList.add('ready'); wrap.classList.remove('upload-error');
  wrap.querySelector('.upload-title').textContent = snap.name;
  wrap.querySelector('.upload-meta').textContent = `${snap.source} · ${snap.inspectedFiles} readable file${snap.inspectedFiles === 1 ? '' : 's'}`;
  wrap.querySelector('.upload-icon').innerHTML = icon('check',22);
@@ -23,7 +23,7 @@ async function processFiles(which,files) {
  if (!files?.length) return;
  const slot = $(`#slot-${which}`); slot.setAttribute('aria-busy','true');
  try { const snap = await parseUpload(files.length === 1 ? files[0].name : `${which === 'before' ? 'Baseline' : 'Updated'} project folder`,files); setLoaded(which,snap); status(`${which === 'before'?'Baseline':'Updated'} version loaded.`, 'success'); }
- catch(err) { console.error(err); status(err.message,'error'); }
+ catch(err) { console.error(err); slot.classList.add('upload-error'); slot.querySelector('.upload-meta').textContent=err.message; status(err.message,'error'); }
  finally { slot.removeAttribute('aria-busy'); }
 }
 for (const which of ['before','after']) {
@@ -33,7 +33,7 @@ for (const which of ['before','after']) {
  for (const eventName of ['dragenter','dragover']) slot.addEventListener(eventName,e=>{e.preventDefault();slot.classList.add('dragging')});
  for (const eventName of ['dragleave','drop']) slot.addEventListener(eventName,e=>{e.preventDefault();slot.classList.remove('dragging')});
  slot.addEventListener('drop', e=>processFiles(which,[...e.dataTransfer.files]));
- $(`#reset-${which}`).addEventListener('click', e=>{ e.preventDefault(); state[which]=null;state.result=null; slot.classList.remove('ready');slot.querySelector('.upload-title').textContent=which==='before'?'Baseline version':'Updated version';slot.querySelector('.upload-meta').textContent='ZIP / PBIX / PBIT / project folder';slot.querySelector('.upload-icon').innerHTML=icon('upload',22);$(`#file-${which}`).value='';$(`#folder-${which}`).value='';e.currentTarget.hidden=true; $('#results').hidden=true;$('#compare-btn').disabled=true;$('#compare-hint').textContent='Add both versions to compare.';});
+ $(`#reset-${which}`).addEventListener('click', e=>{ e.preventDefault(); state[which]=null;state.result=null; slot.classList.remove('ready','upload-error');slot.querySelector('.upload-title').textContent=which==='before'?'Baseline version':'Updated version';slot.querySelector('.upload-meta').textContent='PBIP project ZIP / folder · PBIX / PBIT';slot.querySelector('.upload-icon').innerHTML=icon('upload',22);$(`#file-${which}`).value='';$(`#folder-${which}`).value='';e.currentTarget.hidden=true; $('#results').hidden=true;$('#compare-btn').disabled=true;$('#compare-hint').textContent='Add both versions to compare.';});
 }
 function badgeFor(kind,text) {return `<span class="tag tag-${kind}">${escapeHtml(text)}</span>`;}
 function showResult(result) {

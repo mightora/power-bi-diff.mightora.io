@@ -58,3 +58,9 @@ Mightora / TechTweedie — MIT licensed. Not affiliated with Microsoft. Microsof
 The online edition loads the shared Mightora UI and uses its author configuration (`data/config.json`), including the TechTweedie biography and photographs. The same author markup is present as a static fallback. The offline edition embeds the pinned brand assets at build time, without fetching anything while running.
 
 Quality badges are **live external evidence**, not manually asserted results: GitHub Actions build/deploy, CodeQL and dependency-manifest-check workflow SVGs, plus Shields badges backed by the public GitHub repository for licence, source activity and Pages deployment. All badge links open the underlying GitHub evidence. Offline editions show links to live evidence rather than stale or invented status indicators. The dependency workflow verifies the zero-package runtime manifest; it is not a security certification and does not scan CDN-hosted shared UI code.
+
+## Complete PBIP project import
+
+Use **Choose folder** to select a Power BI project directory containing the `.pbip` shortcut and associated `.Report/` and `.SemanticModel/` folders, or ZIP that directory. The importer follows the project shortcut `artifacts[].report.path` and the `definition.pbir` `datasetReference.byPath.path` reference so multiple reports/models in the same archive are not mixed. An isolated `.pbip` is a shortcut, not a report archive. Multi-report uploads without a single unambiguous `.pbip` shortcut are rejected. External `byConnection` semantic models cannot be read locally. PBIR, PBIR legacy, TMDL and model.bim are supported at their documented levels.
+
+Two complete, anonymised demonstration projects are available as `samples/sample-pbip-v1.zip` and `samples/sample-pbip-v2.zip` and can be compared directly in the application. Processing remains entirely on the client.

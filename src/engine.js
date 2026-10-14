@@ -47,7 +47,7 @@ export async function readZip(input) {
     if (name.endsWith('/') || /(^|\/)(\.git|node_modules|\.pbi)(\/|$)/i.test(name)) continue;
     if (name.split('/').some(seg => seg === '..') || name.startsWith('/')) throw new Error('Unsafe archive path detected.');
     // Skip binary assets: no need to decompress images, datasets, backups, or custom visuals.
-    if (!/(^|\/)(Layout|.*\.(json|tmdl|bim|pbir|pbism))$/i.test(name)) continue;
+    if (!/(^|\/)(Layout|.*\.(json|tmdl|bim|pbir|pbism|pbip))$/i.test(name)) continue;
     if ((flags & 1) || (method !== 8 && method !== 0)) continue;
     if (original > LIMITS.singleEntryBytes || (total += original) > LIMITS.totalUnpackedBytes) throw new Error('Archive contains files exceeding the safe extraction limits.');
     if (localOffset + 30 > data.length || view.getUint32(localOffset, true) !== 0x04034b50) throw new Error('Corrupt ZIP local entry header.');
@@ -238,18 +238,101 @@ function parseTmdl(s, files) {
   }
   return true;
 }
+/** Follow a PBIP shortcut and its report's byPath model reference without merging other reports. */
+function selectPBIP(rawFiles) {
+  const paths = Object.keys(rawFiles);
+  const shortcuts = paths.filter(k => /\.pbip$/i.test(k)).sort();
+  const reportRoots = [...new Set(paths.flatMap(path => {
+    const m = path.match(/^(.*?)(?:\/)?definition\.pbir$/i) || path.match(/^(.*?)(?:\/)?definition\/report\.json$/i);
+    return m ? [m[1]] : [];
+  }))];
+  const names = new Map(paths.map(k => [k.toLowerCase(), k]));
+  const lookup = path => names.get(path.toLowerCase());
+  // Resolve virtual paths strictly inside the upload, never using filesystem access.
+  function resolve(base, reference) {
+    if (typeof reference !== 'string' || !reference.trim() || /^[a-z]+:|^[\\/]/i.test(reference)) return null;
+    const parts = base.split('/').filter(Boolean);
+    for (const step of reference.replaceAll('\\', '/').split('/')) {
+      if (!step || step === '.') continue;
+      if (step === '..') { if (!parts.length) return null; parts.pop(); }
+      else parts.push(step);
+    }
+    return parts.join('/');
+  }
+  let selectedRoot;
+  let shortcutName;
+  const warnings = [];
+  if (shortcuts.length > 1) throw new Error(`This upload contains ${shortcuts.length} .pbip shortcuts. Upload the project for one report at a time (or ZIP each report separately).`);
+  if (shortcuts.length) {
+    const path = shortcuts[0];
+    shortcutName = path.split('/').at(-1);
+    const project = parseJson(decodeText(rawFiles[path]), path);
+    const artifacts = (project.artifacts || []).map(x => x?.report?.path).filter(Boolean);
+    if (artifacts.length !== 1) throw new Error(`${shortcutName} must reference one report. Select a single-report PBIP project.`);
+    const root = resolve(path.split('/').slice(0, -1).join('/'), artifacts[0]);
+    if (!root) throw new Error(`${shortcutName} has an unsafe or invalid report folder reference.`);
+    selectedRoot = reportRoots.find(x => x.toLowerCase() === root.toLowerCase());
+    if (!selectedRoot) {
+      throw new Error(`${shortcutName} is only a project shortcut; its referenced ${root} report folder was not supplied. Choose the complete PBIP project folder or upload it as a ZIP (including the .Report and .SemanticModel folders).`);
+    }
+  } else if (reportRoots.length > 1) {
+    throw new Error(`Several reports were found (${reportRoots.length}) without a single .pbip entrypoint. ZIP one report and its matching semantic model, or include the .pbip shortcut to identify which report to analyse.`);
+  } else if (reportRoots.length === 1) selectedRoot = reportRoots[0];
+  if (!selectedRoot) {
+    if (shortcuts.length) throw new Error('No report definition was found beside the .pbip shortcut. Upload the complete PBIP project folder or ZIP.');
+    return { files: rawFiles, shortcutName: null, warnings };
+  }
+  if (shortcutName && !lookup(selectedRoot + '/definition/report.json') && !lookup(selectedRoot + '/report.json')) {
+    throw new Error(`${shortcutName} is only a project shortcut; the referenced ${selectedRoot} report definition is missing. Choose the complete PBIP project folder or ZIP.`);
+  }
+  const pbirPath = lookup((selectedRoot ? selectedRoot + '/' : '') + 'definition.pbir');
+  let modelRoot = null;
+  let externalModel = false;
+  if (pbirPath) {
+    const definition = parseJson(decodeText(rawFiles[pbirPath]), pbirPath);
+    const byPath = definition.datasetReference?.byPath?.path;
+    if (byPath) {
+      modelRoot = resolve(selectedRoot, byPath);
+      if (!modelRoot) throw new Error(`${pbirPath} has an invalid semantic model reference.`);
+      if (!paths.some(k => k.toLowerCase().startsWith(modelRoot.toLowerCase() + '/'))) {
+        warnings.push(`The report references ${modelRoot}, but that semantic model folder was not included. DAX and relationships cannot be verified.`);
+      }
+    } else if (definition.datasetReference?.byConnection) {
+      externalModel = true;
+      warnings.push('This PBIR connects to an external semantic model (byConnection); model measures and relationships cannot be inspected from report metadata.');
+    }
+  }
+  // Only fall back to implicit sibling matching when the report has no explicit model reference.
+  if (!modelRoot && !externalModel) {
+    const candidates = [...new Set(paths.filter(x => /\.SemanticModel\//i.test(x)).map(x => x.slice(0, x.toLowerCase().indexOf('.semanticmodel/') + '.SemanticModel'.length)))];
+    if (candidates.length === 1) modelRoot = candidates[0];
+    else if (candidates.length > 1) warnings.push('Multiple semantic models found; none linked by the report, so DAX and relationships were not compared.');
+  }
+  // A PBIR export may start directly at definition/, without a .Report wrapper.
+  if (!selectedRoot && !shortcutName) return { files: rawFiles, shortcutName: null, warnings };
+  const selected = Object.fromEntries(Object.entries(rawFiles).filter(([path]) => {
+    const lower = path.toLowerCase();
+    const reportPrefix = selectedRoot ? selectedRoot.toLowerCase() + '/' : '';
+    return (reportPrefix && lower.startsWith(reportPrefix)) || (modelRoot && lower.startsWith(modelRoot.toLowerCase() + '/'));
+  }));
+  return { files: selected, shortcutName, warnings, reportRoot: selectedRoot, modelRoot };
+}
 export function parseFiles(name, rawFiles) {
   const s = snapshot(name);
-  const files = Object.fromEntries(Object.entries(rawFiles).map(([k,v]) => [maxPath(k), v]));
-  s.inspectedFiles = Object.keys(files).length;
+  const allFiles = Object.fromEntries(Object.entries(rawFiles).map(([k,v]) => [maxPath(k), v]));
+  s.inspectedFiles = Object.keys(allFiles).length;
   if (!s.inspectedFiles) throw new Error('No readable report files found.');
-  const simple = Object.entries(files).filter(([k]) => /\.json$/i.test(k));
-  if (simple.length === 1) {
+  const simple = Object.entries(allFiles).filter(([k]) => /\.json$/i.test(k));
+  if (simple.length === 1 && Object.keys(allFiles).length === 1) {
     try { const snap = JSON.parse(decodeText(simple[0][1])); if (snap.format === 'mightora-report-snapshot-v1' && snap.entities) return { ...s, ...snap, name }; } catch { /* not a snapshot */ }
   }
+  const selected = selectPBIP(allFiles);
+  s.warnings.push(...selected.warnings);
+  const files = selected.files;
   if (!parsePBIR(s, files)) parseLegacy(s, files);
   if (!readBim(s, files)) parseTmdl(s, files);
-  if (!Object.values(s.supported).some(Boolean)) throw new Error('No supported Power BI metadata found. Use a ZIP of the PBIP project (Report + SemanticModel), a PBIR export, or a legacy PBIX with a readable Report/Layout.');
+  if (!Object.values(s.supported).some(Boolean)) throw new Error('No supported Power BI metadata found. Choose a complete PBIP project folder / ZIP containing the .Report and .SemanticModel folders, a PBIR export, or a legacy PBIX with readable Report/Layout.');
+  if (selected.shortcutName) s.source = `PBIP · ${s.source}`;
   if (!s.supported.measures) s.warnings.push('DAX comparison unavailable: no TMDL table files or model.bim found.');
   if (!s.supported.relationships) s.warnings.push('Relationship comparison unavailable: no TMDL relationships or model.bim found.');
   return s;
@@ -260,7 +343,7 @@ export async function parseUpload(name, files) {
     if (file.size > LIMITS.archiveBytes) throw new Error(`${file.name} exceeds the 65 MB size limit.`);
     const path = file.webkitRelativePath || file.name;
     if (/\.(zip|pbix|pbit)$/i.test(file.name)) Object.assign(collected, await readZip(await file.arrayBuffer()));
-    else if (/\.(json|tmdl|bim|pbir|pbism)$/i.test(file.name) || /\/Layout$/i.test(path)) collected[path] = new Uint8Array(await file.arrayBuffer());
+    else if (/\.(json|tmdl|bim|pbir|pbism|pbip)$/i.test(file.name) || /\/Layout$/i.test(path)) collected[path] = new Uint8Array(await file.arrayBuffer());
   }
   return parseFiles(name, collected);
 }

@@ -58,3 +58,6 @@ mightora-footer,.site-footer{display:block;background:#111827;color:rgba(255,255
 
 @media(max-width:600px){.author-section-inner{flex-direction:column;text-align:center}.author-links{justify-content:center}.footer-main{grid-template-columns:1fr}.author-section-overlay{padding:3.5rem 1rem}}
 html[data-edition="offline"] .quick-jump-nav{top:76px}
+
+/* Show PBIP upload diagnostics directly alongside the selected upload. */
+.upload-card.upload-error .upload-meta { color: var(--danger, #b91c1c); white-space: normal; overflow-wrap: anywhere; }
